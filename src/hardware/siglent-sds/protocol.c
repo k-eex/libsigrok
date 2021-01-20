@@ -79,7 +79,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			g_usleep(s);
 		} while (out & 1 != 1);
 		// FIXME: this loop should probably continue until we get a 1 instead of !=0
-		sr_dbg("Device triggered.");
+		sr_dbg("Device triggered (wait status 1): %d", out);
 
 		if ((devc->timebase < 0.51) && (devc->timebase > 0.99e-6)) {
 			/*
@@ -92,7 +92,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			g_usleep(s);
 		}
 	}
-	if (devc->wait_status == 2) {
+	else if (devc->wait_status == 2) {
 		do {
 			if (time(NULL) - start >= 3) {
 				sr_dbg("Timeout waiting for trigger.");
@@ -106,7 +106,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 
 		} while (out & 1 != 1);
 
-		sr_dbg("Device triggered.");
+		sr_dbg("Device triggered (wait status 2): %d", out);
 
 		siglent_sds_set_wait_event(devc, WAIT_NONE);
 	}
