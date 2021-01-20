@@ -576,7 +576,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					sr_dev_acquisition_stop(sdi);
 					return TRUE;
 				} else if (len == 0) {
-					sr_erro("Read zero bytes, aborting capture.");
+					sr_err("Read zero bytes, aborting capture.");
 					packet.type = SR_DF_FRAME_END;
 					sr_session_send(sdi, &packet);
 					sr_dev_acquisition_stop(sdi);
