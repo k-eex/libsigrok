@@ -559,6 +559,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 			do {
 				sr_dbg("Requesting: %li bytes.", devc->num_samples - devc->num_block_bytes);
 				len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
+				sr_dbg("Received: %li bytes.", len);
 				if (len == -1) {
 					sr_err("Read error, aborting capture.");
 					packet.type = SR_DF_FRAME_END;
@@ -608,7 +609,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					g_array_free(data, TRUE);
 				}
 
-				if (devc->num_samples >= devc->num_block_bytes) {
+				if (devc->num_samples <= devc->num_block_bytes) {
 					sr_dbg("Transfer has been completed.");
 					devc->num_header_bytes = 0;
 					devc->num_block_bytes = 0;
