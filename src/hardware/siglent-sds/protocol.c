@@ -75,6 +75,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			if (sr_scpi_get_string(sdi->conn, ":INR?", &buf) != SR_OK)
 				return SR_ERR;
 			sr_atoi(buf, &out);
+			g_free(buf);
 			g_usleep(s);
 		} while (out & 1 != 1);
 		// FIXME: this loop should probably continue until we get a 1 instead of !=0
@@ -100,16 +101,10 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			if (sr_scpi_get_string(sdi->conn, ":INR?", &buf) != SR_OK)
 				return SR_ERR;
 			sr_atoi(buf, &out);
+			g_free(buf);
 			g_usleep(s);
-		/* XXX
-		 * Now this loop condition looks suspicious! A bitwise
-		 * OR of a variable and a non-zero literal should be
-		 * non-zero. Logical AND of several non-zero values
-		 * should be non-zero. Are many parts of the condition
-		 * not taking effect? Was some different condition meant
-		 * to get encoded? This needs review, and adjustment.
-		 */
-		} while (out != DEVICE_STATE_TRIG_RDY || out != DEVICE_STATE_DATA_TRIG_RDY || out != DEVICE_STATE_STOPPED);
+
+		} while (out & 1 != 1);
 
 		sr_dbg("Device triggered.");
 
