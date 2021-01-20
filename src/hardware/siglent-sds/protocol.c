@@ -301,8 +301,6 @@ SR_PRIV int siglent_sds_channel_start(const struct sr_dev_inst *sdi)
 				return SR_ERR;
 		}
 		siglent_sds_set_wait_event(devc, WAIT_NONE);
-		if (sr_scpi_read_begin(sdi->conn) != SR_OK)
-			return TRUE;
 		break;
 	}
 
