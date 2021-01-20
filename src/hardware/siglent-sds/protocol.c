@@ -77,7 +77,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			sr_atoi(buf, &out);
 			g_free(buf);
 			g_usleep(s);
-		} while (out & 1 != 1);
+		} while ((out & 1) != 1);
 		// FIXME: this loop should probably continue until we get a 1 instead of !=0
 		sr_dbg("Device triggered (wait status 1): %d", out);
 
@@ -104,7 +104,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			g_free(buf);
 			g_usleep(s);
 
-		} while (out & 1 != 1);
+		} while ((out & 1) != 1);
 
 		sr_dbg("Device triggered (wait status 2): %d", out);
 
