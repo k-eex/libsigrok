@@ -180,8 +180,9 @@ static int scpi_tcp_raw_read_data(void *priv, char *buf, int maxlen)
 	struct scpi_tcp *tcp = priv;
 	int len;
 
+	sr_dbg("Starting TCP recv..");
 	len = recv(tcp->socket, buf, maxlen, 0);
-
+	sr_dbg("Done TCP recv");
 	if (len < 0) {
 		sr_err("Receive error: %s", g_strerror(errno));
 		return SR_ERR;

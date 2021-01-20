@@ -539,7 +539,7 @@ static int scpi_usbtmc_bulkin_start(struct scpi_usbtmc_libusb *uscpi,
 		sr_err("USBTMC invalid bulk in header.");
 		return SR_ERR;
 	}
-
+	sr_dbg("USBTMC message size: %d", message_size);
 	message_size += USBTMC_BULK_HEADER_SIZE;
 	uscpi->response_length = MIN(transferred, message_size);
 	uscpi->response_bytes_read = USBTMC_BULK_HEADER_SIZE;
@@ -565,7 +565,7 @@ static int scpi_usbtmc_bulkin_continue(struct scpi_usbtmc_libusb *uscpi,
 	uscpi->response_length = MIN(transferred, uscpi->remaining_length);
 	uscpi->response_bytes_read = 0;
 	uscpi->remaining_length -= uscpi->response_length;
-
+	sr_dbg("USBTMC transferred: %d", transferred);
 	return transferred;
 }
 
@@ -607,8 +607,11 @@ static int scpi_usbtmc_libusb_read_data(void *priv, char *buf, int maxlen)
 	if (uscpi->response_bytes_read >= uscpi->response_length) {
 		if (uscpi->remaining_length > 0) {
 			if (scpi_usbtmc_bulkin_continue(uscpi, uscpi->buffer,
-			                                sizeof(uscpi->buffer)) <= 0)
+			                                sizeof(uscpi->buffer)) <= 0) {
+				sr_dbg("BULKIN CONTINUE FAILED");
 				return SR_ERR;
+			}
+
 		} else {
 			if (uscpi->bulkin_attributes & EOM)
 				return SR_ERR;

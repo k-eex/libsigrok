@@ -161,6 +161,7 @@ static int scpi_send_variadic(struct sr_scpi_dev_inst *scpi,
 		buf[len] = '\n';
 
 	/* Send command. */
+	sr_dbg("SCPI send buffer (variadic): %s", buf);
 	ret = scpi->send(scpi->priv, buf);
 
 	/* Free command buffer. */
@@ -236,6 +237,7 @@ static int scpi_read_response(struct sr_scpi_dev_inst *scpi,
 	int len, space;
 
 	space = response->allocated_len - response->len;
+
 	len = scpi->read_data(scpi->priv, &response->str[response->len], space);
 
 	if (len < 0) {
@@ -243,6 +245,7 @@ static int scpi_read_response(struct sr_scpi_dev_inst *scpi,
 		return SR_ERR;
 	}
 
+	sr_dbg("SCPI read %d bytes", len);
 	if (len > 0) {
 		g_string_set_size(response, response->len + len);
 		return len;
@@ -252,7 +255,6 @@ static int scpi_read_response(struct sr_scpi_dev_inst *scpi,
 		sr_err("Timed out waiting for SCPI response.");
 		return SR_ERR_TIMEOUT;
 	}
-
 	return 0;
 }
 
@@ -276,6 +278,7 @@ static int scpi_get_data(struct sr_scpi_dev_inst *scpi,
 
 	/* Optionally send caller provided command. */
 	if (command) {
+		sr_dbg("SCPI GET DATA send CMD: %s", command);
 		if (scpi_send(scpi, command) != SR_OK)
 			return SR_ERR;
 	}
@@ -511,6 +514,7 @@ SR_PRIV int sr_scpi_send_variadic(struct sr_scpi_dev_inst *scpi,
  */
 SR_PRIV int sr_scpi_read_begin(struct sr_scpi_dev_inst *scpi)
 {
+	sr_dbg("SCPI read begin!");
 	return scpi->read_begin(scpi->priv);
 }
 
@@ -568,7 +572,9 @@ SR_PRIV int sr_scpi_write_data(struct sr_scpi_dev_inst *scpi,
  */
 SR_PRIV int sr_scpi_read_complete(struct sr_scpi_dev_inst *scpi)
 {
-	return scpi->read_complete(scpi->priv);
+	int completed = scpi->read_complete(scpi->priv);
+	sr_dbg("SCPI is read completed: %d", completed);
+	return completed;
 }
 
 /**
@@ -581,7 +587,7 @@ SR_PRIV int sr_scpi_read_complete(struct sr_scpi_dev_inst *scpi)
 SR_PRIV int sr_scpi_close(struct sr_scpi_dev_inst *scpi)
 {
 	int ret;
-
+	sr_dbg("SCPI CLOSE");
 	g_mutex_lock(&scpi->scpi_mutex);
 	ret = scpi->close(scpi);
 	g_mutex_unlock(&scpi->scpi_mutex);
@@ -600,7 +606,7 @@ SR_PRIV void sr_scpi_free(struct sr_scpi_dev_inst *scpi)
 {
 	if (!scpi)
 		return;
-
+	sr_dbg("SCPI FREE");
 	scpi->free(scpi->priv);
 	g_free(scpi->priv);
 	g_free(scpi->actual_channel_name);
