@@ -539,7 +539,7 @@ static int scpi_usbtmc_bulkin_start(struct scpi_usbtmc_libusb *uscpi,
 		sr_err("USBTMC invalid bulk in header.");
 		return SR_ERR;
 	}
-
+	sr_dbg("USBTMC message size: %d", message_size);
 	message_size += USBTMC_BULK_HEADER_SIZE;
 	uscpi->response_length = MIN(transferred, message_size);
 	uscpi->response_bytes_read = USBTMC_BULK_HEADER_SIZE;
