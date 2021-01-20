@@ -535,6 +535,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				if (sr_scpi_read_begin(scpi) != SR_OK)
 					return TRUE;
 				wait = ((devc->timebase * devc->model->series->num_horizontal_divs) * 100000);
+				wait = 100000;
 				sr_dbg("Waiting %.f0 ms for device to prepare the output buffers", wait / 1000);
 				g_usleep(wait);
 				break;
