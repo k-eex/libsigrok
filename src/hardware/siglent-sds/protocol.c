@@ -76,7 +76,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 				return SR_ERR;
 			sr_atoi(buf, &out);
 			g_usleep(s);
-		} while (out == 0);
+		} while (out && 1 != 1);
 		// FIXME: this loop should probably continue until we get a 1 instead of !=0
 		sr_dbg("Device triggered.");
 
@@ -163,6 +163,7 @@ SR_PRIV int siglent_sds_capture_start(const struct sr_dev_inst *sdi)
 
 			sr_dbg("Starting data capture for active frameset %" PRIu64 " of %" PRIu64,
 				devc->num_frames + 1, devc->limit_frames);
+
 			if (siglent_sds_config_set(sdi, "ARM") != SR_OK)
 				return SR_ERR;
 			if (sr_scpi_get_string(sdi->conn, ":INR?", &buf) != SR_OK)
@@ -212,21 +213,35 @@ SR_PRIV int siglent_sds_capture_start(const struct sr_dev_inst *sdi)
 
 			sr_dbg("Starting data capture for active frameset %" PRIu64 " of %" PRIu64,
 				devc->num_frames + 1, devc->limit_frames);
+
+			// Clear INR
+			do {
+				if (sr_scpi_get_string(sdi->conn, ":INR?", &buf) != SR_OK)
+					return SR_ERR;
+				sr_atoi(buf, &out);
+				g_free(buf);
+				g_usleep(100);
+			} while (out != 0);
+
+			// TODO what if I don't want to arm?
 			if (siglent_sds_config_set(sdi, "ARM") != SR_OK)
 				return SR_ERR;
 			if (sr_scpi_get_string(sdi->conn, ":INR?", &buf) != SR_OK)
 				return SR_ERR;
 			sr_atoi(buf, &out);
+			g_free(buf);
+
 			if (out == DEVICE_STATE_TRIG_RDY) {
+				sr_spew("Trigger ready");
 				siglent_sds_set_wait_event(devc, WAIT_TRIGGER);
 			} else if (out == DEVICE_STATE_DATA_TRIG_RDY) {
 				sr_spew("Device triggered.");
 				siglent_sds_set_wait_event(devc, WAIT_BLOCK);
-				return SR_OK;
 			} else {
 				sr_spew("Device did not enter ARM mode.");
 				return SR_ERR;
 			}
+			return SR_OK;
 		} else { /* TODO: Implement history retrieval. */
 			unsigned int framecount;
 			char buf[200];
@@ -293,7 +308,6 @@ SR_PRIV int siglent_sds_channel_start(const struct sr_dev_inst *sdi)
 		siglent_sds_set_wait_event(devc, WAIT_NONE);
 		if (sr_scpi_read_begin(sdi->conn) != SR_OK)
 			return TRUE;
-		siglent_sds_set_wait_event(devc, WAIT_BLOCK);
 		break;
 	}
 
