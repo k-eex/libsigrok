@@ -639,7 +639,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 						sr_session_send(sdi, &packet);
 						sr_dev_acquisition_stop(sdi);
 					}
-					
+
 					sr_dbg("Verify read complete.");
 					if (!sr_scpi_read_complete(scpi)) {
 						sr_err("Read should have been completed.");
@@ -659,7 +659,13 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				sr_dbg("Proceed to next channel");
 				/* We got the frame for this channel, now get the next channel. */
 				devc->channel_entry = devc->channel_entry->next;
-				siglent_sds_channel_start(sdi);
+				if (siglent_sds_channel_start(sdi) != SR_OK) {
+					sr_err("Next channel read failed.");
+					packet.type = SR_DF_FRAME_END;
+					sr_session_send(sdi, &packet);
+					sdi->driver->dev_acquisition_stop(sdi);
+					return TRUE;
+				}
 			} else {
 				/* Done with this frame. */
 				packet.type = SR_DF_FRAME_END;
