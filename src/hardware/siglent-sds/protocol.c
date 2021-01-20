@@ -77,7 +77,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 			sr_atoi(buf, &out);
 			g_usleep(s);
 		} while (out == 0);
-
+		// FIXME: this loop should probably continue until we get a 1 instead of !=0
 		sr_dbg("Device triggered.");
 
 		if ((devc->timebase < 0.51) && (devc->timebase > 0.99e-6)) {
@@ -544,8 +544,8 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				sdi->driver->dev_acquisition_stop(sdi);
 				return TRUE;
 			}
-			devc->num_block_bytes = len;
-			devc->num_block_read = 0;
+			devc->num_block_bytes = 0; // Number of block bytes read
+			devc->num_block_read = 0; // Number of blocks read
 
 			if (len == -1) {
 				sr_err("Read error, aborting capture.");
@@ -555,26 +555,26 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				return TRUE;
 			}
 
+			read_complete = FALSE;
 			do {
-				read_complete = FALSE;
-				if (devc->num_block_bytes > devc->num_samples) {
-					/* We received all data as one block. */
-					/* Offset the data block buffer past the IEEE header and description header. */
-					devc->buffer += devc->block_header_size;
-					len = devc->num_samples;
-				} else {
-					sr_dbg("Requesting: %li bytes.", devc->num_samples - devc->num_block_bytes);
-					len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
-					if (len == -1) {
-						sr_err("Read error, aborting capture.");
-						packet.type = SR_DF_FRAME_END;
-						sr_session_send(sdi, &packet);
-						sdi->driver->dev_acquisition_stop(sdi);
-						return TRUE;
-					}
-					devc->num_block_read++;
-					devc->num_block_bytes += len;
+				sr_dbg("Requesting: %li bytes.", devc->num_samples - devc->num_block_bytes);
+				len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
+				if (len == -1) {
+					sr_err("Read error, aborting capture.");
+					packet.type = SR_DF_FRAME_END;
+					sr_session_send(sdi, &packet);
+					sr_dev_acquisition_stop(sdi);
+					return TRUE;
+				} else if (len == 0) {
+					sr_erro("Read zero bytes, aborting capture.");
+					packet.type = SR_DF_FRAME_END;
+					sr_session_send(sdi, &packet);
+					sr_dev_acquisition_stop(sdi);
+					return TRUE;
 				}
+				devc->num_block_read++;
+				devc->num_block_bytes += len;
+
 				sr_dbg("Received block: %i, %d bytes.", devc->num_block_read, len);
 				if (ch->type == SR_CHANNEL_ANALOG) {
 					float vdiv = devc->vdiv[ch->index];
@@ -607,12 +607,22 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					g_slist_free(analog.meaning->channels);
 					g_array_free(data, TRUE);
 				}
-				len = 0;
-				if (devc->num_samples == (devc->num_block_bytes - SIGLENT_HEADER_SIZE)) {
+
+				if (devc->num_samples >= devc->num_block_bytes) {
 					sr_dbg("Transfer has been completed.");
 					devc->num_header_bytes = 0;
 					devc->num_block_bytes = 0;
 					read_complete = TRUE;
+
+					// Clear linefeeds
+					len = sr_scpi_read_data(scpi, (char *)devc->buffer, 3);
+					if (len != 2) {
+						sr_err("Expected linefeeds were missing.");
+						packet.type = SR_DF_FRAME_END;
+						sr_session_send(sdi, &packet);
+						sr_dev_acquisition_stop(sdi);
+					}
+
 					if (!sr_scpi_read_complete(scpi)) {
 						sr_err("Read should have been completed.");
 						packet.type = SR_DF_FRAME_END;
