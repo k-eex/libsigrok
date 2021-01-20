@@ -31,7 +31,7 @@
 //#define ACQ_BUFFER_SIZE (6000000)
 #define ACQ_BUFFER_SIZE (18000000)
 
-#define SIGLENT_HEADER_SIZE 363
+#define SIGLENT_HEADER_SIZE 361
 #define SIGLENT_DIG_HEADER_SIZE 346
 
 /* Maximum number of samples to retrieve at once. */
@@ -153,6 +153,8 @@ struct dev_context {
 	unsigned char *buffer;
 	float *data;
 	GArray *dig_buffer;
+    /* General purpose retry counter for grafceful failure out of infinite loops and whatnot */
+    int retry_count;
 };
 
 SR_PRIV int siglent_sds_config_set(const struct sr_dev_inst *sdi,
