@@ -581,7 +581,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					sr_session_send(sdi, &packet);
 					sr_dev_acquisition_stop(sdi);
 					return TRUE;
-				} else if (len == 2 && num_block_read == 0) {
+				} else if (len == 2 && devc->num_block_read == 0) {
 					sr_err("Bad waveform, try again");
 					siglent_sds_set_wait_event(devc, WAIT_BLOCK);
 					return TRUE;
