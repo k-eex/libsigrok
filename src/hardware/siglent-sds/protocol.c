@@ -323,11 +323,12 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 
 	/* Read header from device. */
 	ret = sr_scpi_read_data(scpi, buf, SIGLENT_HEADER_SIZE);
+	sr_dbg("Device returned %i bytes.", ret);
 	if (ret < SIGLENT_HEADER_SIZE) {
 		sr_err("Read error while reading data header.");
 		return SR_ERR;
+
 	}
-	sr_dbg("Device returned %i bytes.", ret);
 	devc->num_header_bytes += ret;
 	buf += block_offset; /* Skip to start descriptor block. */
 
