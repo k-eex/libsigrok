@@ -76,7 +76,7 @@ static int siglent_sds_event_wait(const struct sr_dev_inst *sdi)
 				return SR_ERR;
 			sr_atoi(buf, &out);
 			g_usleep(s);
-		} while (out && 1 != 1);
+		} while (out & 1 != 1);
 		// FIXME: this loop should probably continue until we get a 1 instead of !=0
 		sr_dbg("Device triggered.");
 
