@@ -616,6 +616,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					read_complete = TRUE;
 
 					// Clear linefeeds
+					sr_dbg("Clear linefeeds.");
 					len = sr_scpi_read_data(scpi, (char *)devc->buffer, 3);
 					if (len != 2) {
 						sr_err("Expected linefeeds were missing.");
@@ -623,7 +624,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 						sr_session_send(sdi, &packet);
 						sr_dev_acquisition_stop(sdi);
 					}
-
+					sr_dbg("Verify read complete.");
 					if (!sr_scpi_read_complete(scpi)) {
 						sr_err("Read should have been completed.");
 						packet.type = SR_DF_FRAME_END;
@@ -639,6 +640,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 			} while (!read_complete);
 
 			if (devc->channel_entry->next) {
+				sr_dbg("Proceed to next channel");
 				/* We got the frame for this channel, now get the next channel. */
 				devc->channel_entry = devc->channel_entry->next;
 				siglent_sds_channel_start(sdi);
