@@ -591,11 +591,13 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					sr_dev_acquisition_stop(sdi);
 					return TRUE;
 				} else if (len == 0) {
+					/*
 					sr_err("Read zero bytes, aborting capture.");
 					packet.type = SR_DF_FRAME_END;
 					sr_session_send(sdi, &packet);
 					sr_dev_acquisition_stop(sdi);
 					return TRUE;
+					*/
 				} else if (len == 2 && devc->num_block_read == 0) {
 					sr_err("Bad waveform, try again");
 					siglent_sds_set_wait_event(devc, WAIT_BLOCK);
@@ -605,6 +607,10 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				devc->num_block_bytes += len;
 
 				sr_dbg("Received block: %i, %d bytes.", devc->num_block_read, len);
+				if (len == 0) {
+					sr_dbg("Skip..");
+					continue;
+				}
 				if (ch->type == SR_CHANNEL_ANALOG) {
 					float vdiv = devc->vdiv[ch->index];
 					float offset = devc->vert_offset[ch->index];
