@@ -317,21 +317,34 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 	struct sr_scpi_dev_inst *scpi = sdi->conn;
 	struct dev_context *devc = sdi->priv;
 	char *buf = (char *)devc->buffer;
-	int ret, desc_length;
+	int desc_length;
 	int block_offset = 15; /* Offset for descriptor block. */
 	long data_length = 0;
+	int header_bytes_read_total = 0;
 
-	/* Read header from device. */
-	ret = sr_scpi_read_data(scpi, buf, SIGLENT_HEADER_SIZE);
-	sr_dbg("Device returned %i bytes.", ret);
-	if (ret < SIGLENT_HEADER_SIZE) {
-		sr_err("Read error while reading data header.");
-		buf[ret] = '\0';
-		sr_dbg("Bad header raw: %s", buf);
-		return SR_ERR;
+	/* Read header from device.
+	* USBTMC packet is limited to 64 bytes (52 bytes per packet), so we read it with a loop
+	*/
+	do {
+		sr_dbg("Reading header..")
+		int header_bytes_read = sr_scpi_read_data(scpi,
+												  buf + header_bytes_read_total,
+												  SIGLENT_HEADER_SIZE - header_bheader_bytes_read_totalytes_read);
+		if (header_bytes_read == -1) {
+			sr_err("Read error");
+			// TODO graceful exit
+			return SR_ERR;
+		} else if (header_bytes_read == 0) {
+			sr_err("No data");
+			return SR_ERR;
+		}
+		header_bytes_read_total += header_bytes_read;
 
-	}
-	devc->num_header_bytes += ret;
+	} while (header_bytes_read < SIGLENT_HEADER_SIZE)
+
+	sr_dbg("Device returned %i bytes.", header_bytes_read_total);
+
+	devc->num_header_bytes += header_bytes_read_total;
 	buf += block_offset; /* Skip to start descriptor block. */
 
 	/* Parse WaveDescriptor header. */
@@ -341,9 +354,9 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 	devc->block_header_size = desc_length + 15;
 	devc->num_samples = data_length;
 
-	sr_dbg("Received data block header: '%s' -> block length %d.", buf, ret);
+	sr_dbg("Received data block header: '%s' -> block length %d.", buf, header_bytes_read_total);
 
-	return ret;
+	return header_bytes_read_total;
 }
 
 static int siglent_sds_get_digital(const struct sr_dev_inst *sdi, struct sr_channel *ch)
