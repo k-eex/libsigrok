@@ -340,7 +340,7 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 		}
 		header_bytes_read_total += header_bytes_read;
 
-	} while (header_bytes_read < SIGLENT_HEADER_SIZE)
+	} while (header_bytes_read_total < SIGLENT_HEADER_SIZE)
 
 	sr_dbg("Device returned %i bytes.", header_bytes_read_total);
 
