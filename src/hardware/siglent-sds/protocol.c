@@ -589,7 +589,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 			if (len == -1) {
 				// Siglent send buffer is 61440 bytes
 				sr_dbg("Read error at %d bytes, sleep a bit", devc->num_block_bytes);
-				g_usleep(1000000);
+				g_usleep(1000);
 				return TRUE;
 				/*
 				sr_err("Read error, aborting capture.");
