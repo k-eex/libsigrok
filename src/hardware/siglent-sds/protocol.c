@@ -326,7 +326,7 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 	* USBTMC packet is limited to 64 bytes (52 bytes per packet), so we read it with a loop
 	*/
 	do {
-		sr_dbg("Reading header..")
+		sr_dbg("Reading header..");
 		int header_bytes_read = sr_scpi_read_data(scpi,
 												  buf + header_bytes_read_total,
 												  SIGLENT_HEADER_SIZE - header_bheader_bytes_read_totalytes_read);
@@ -340,7 +340,7 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 		}
 		header_bytes_read_total += header_bytes_read;
 
-	} while (header_bytes_read_total < SIGLENT_HEADER_SIZE)
+	} while (header_bytes_read_total < SIGLENT_HEADER_SIZE);
 
 	sr_dbg("Device returned %i bytes.", header_bytes_read_total);
 
