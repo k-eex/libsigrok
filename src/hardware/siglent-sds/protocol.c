@@ -307,7 +307,8 @@ SR_PRIV int siglent_sds_channel_start(const struct sr_dev_inst *sdi)
 	devc->num_channel_bytes = 0;
 	devc->num_header_bytes = 0;
 	devc->num_block_bytes = 0;
-
+	sr_dbg("Wait a bit..");
+	g_usleep(1000000);
 	return SR_OK;
 }
 
@@ -549,11 +550,11 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				/* The newer models (ending with the E) have faster CPUs but still need time when a slow timebase is selected. */
 				if (sr_scpi_read_begin(scpi) != SR_OK)
 					return TRUE;
-				wait = ((devc->timebase * devc->model->series->num_horizontal_divs) * 100000);
-				//wait = 2000000;
-				sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
-				g_usleep(wait);
-				//sr_dbg("There's no time to wait!!");
+				//wait = ((devc->timebase * devc->model->series->num_horizontal_divs) * 100000);
+				//wait = 1000000;
+				//sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
+				//g_usleep(wait);
+				sr_dbg("There's no time to wait!!");
 				break;
 			}
 
