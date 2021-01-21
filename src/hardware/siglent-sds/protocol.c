@@ -587,11 +587,17 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 			len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
 			sr_dbg("Received: %li bytes.", len);
 			if (len == -1) {
+				// Siglent send buffer is 61440 bytes
+				sr_dbg("Read error at %d bytes, sleep a bit", devc->num_block_bytes);
+				g_usleep(1000000);
+				return TRUE;
+				/*
 				sr_err("Read error, aborting capture.");
 				packet.type = SR_DF_FRAME_END;
 				sr_session_send(sdi, &packet);
 				sr_dev_acquisition_stop(sdi);
 				return TRUE;
+				*/
 			} else if (len == 0) {
 
 				sr_err("Read zero bytes, aborting capture.");
