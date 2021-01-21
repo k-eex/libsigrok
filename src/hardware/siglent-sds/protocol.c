@@ -550,10 +550,10 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				if (sr_scpi_read_begin(scpi) != SR_OK)
 					return TRUE;
 				wait = ((devc->timebase * devc->model->series->num_horizontal_divs) * 100000);
-				wait = 2000000;
-				//sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
-				//g_usleep(wait);
-				sr_dbg("There's no time to wait!!");
+				//wait = 2000000;
+				sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
+				g_usleep(wait);
+				//sr_dbg("There's no time to wait!!");
 				break;
 			}
 
@@ -592,13 +592,12 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				sr_dev_acquisition_stop(sdi);
 				return TRUE;
 			} else if (len == 0) {
-				/*
+
 				sr_err("Read zero bytes, aborting capture.");
 				packet.type = SR_DF_FRAME_END;
 				sr_session_send(sdi, &packet);
 				sr_dev_acquisition_stop(sdi);
 				return TRUE;
-				*/
 			} else if (len == 2 && devc->num_block_read == 0) {
 				sr_err("Bad waveform, try again");
 				siglent_sds_set_wait_event(devc, WAIT_BLOCK);
