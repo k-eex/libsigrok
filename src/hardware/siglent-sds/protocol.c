@@ -672,6 +672,9 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				} else {
 					sr_dbg("%" PRIu64 " of %" PRIu64 " block bytes read.",
 						devc->num_block_bytes, devc->num_samples);
+
+					// Experimental return
+					return TRUE;
 				}
 			} while (!read_complete);
 
