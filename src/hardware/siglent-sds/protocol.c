@@ -329,7 +329,7 @@ static int siglent_sds_read_header(struct sr_dev_inst *sdi)
 		sr_dbg("Reading header..");
 		int header_bytes_read = sr_scpi_read_data(scpi,
 												  buf + header_bytes_read_total,
-												  SIGLENT_HEADER_SIZE - header_bheader_bytes_read_totalytes_read);
+												  SIGLENT_HEADER_SIZE - header_bytes_read_total);
 		if (header_bytes_read == -1) {
 			sr_err("Read error");
 			// TODO graceful exit
