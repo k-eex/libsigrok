@@ -578,133 +578,132 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 				sdi->driver->dev_acquisition_stop(sdi);
 				return TRUE;
 			}
-
-			read_complete = FALSE;
-			do {
-				sr_dbg("Requesting: %li bytes.", devc->num_samples - devc->num_block_bytes);
-				len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
-				sr_dbg("Received: %li bytes.", len);
-				if (len == -1) {
-					sr_err("Read error, aborting capture.");
-					packet.type = SR_DF_FRAME_END;
-					sr_session_send(sdi, &packet);
-					sr_dev_acquisition_stop(sdi);
-					return TRUE;
-				} else if (len == 0) {
-					/*
-					sr_err("Read zero bytes, aborting capture.");
-					packet.type = SR_DF_FRAME_END;
-					sr_session_send(sdi, &packet);
-					sr_dev_acquisition_stop(sdi);
-					return TRUE;
-					*/
-				} else if (len == 2 && devc->num_block_read == 0) {
-					sr_err("Bad waveform, try again");
-					siglent_sds_set_wait_event(devc, WAIT_BLOCK);
-					return TRUE;
-				}
-				devc->num_block_read++;
-				devc->num_block_bytes += len;
-
-				sr_dbg("Received block: %i, %d bytes.", devc->num_block_read, len);
-				if (len == 0) {
-					sr_dbg("Skip..");
-					continue;
-				}
-				if (ch->type == SR_CHANNEL_ANALOG) {
-					float vdiv = devc->vdiv[ch->index];
-					float offset = devc->vert_offset[ch->index];
-					GArray *float_data;
-					static GArray *data;
-					float voltage, vdivlog;
-					int digits;
-
-					data = g_array_sized_new(FALSE, FALSE, sizeof(uint8_t), len);
-					g_array_append_vals(data, devc->buffer, len);
-					float_data = g_array_new(FALSE, FALSE, sizeof(float));
-					for (i = 0; i < len; i++) {
-						voltage = (float)g_array_index(data, int8_t, i) / 25;
-						voltage = ((vdiv * voltage) - offset);
-						g_array_append_val(float_data, voltage);
-					}
-					vdivlog = log10f(vdiv);
-					digits = -(int) vdivlog + (vdivlog < 0.0);
-					sr_analog_init(&analog, &encoding, &meaning, &spec, digits);
-					analog.meaning->channels = g_slist_append(NULL, ch);
-					analog.num_samples = float_data->len;
-					analog.data = (float *)float_data->data;
-					analog.meaning->mq = SR_MQ_VOLTAGE;
-					analog.meaning->unit = SR_UNIT_VOLT;
-					analog.meaning->mqflags = 0;
-					packet.type = SR_DF_ANALOG;
-					packet.payload = &analog;
-					sr_session_send(sdi, &packet);
-					g_slist_free(analog.meaning->channels);
-					g_array_free(data, TRUE);
-				}
-
-				if (devc->num_samples <= devc->num_block_bytes) {
-					sr_dbg("Transfer has been completed.");
-					devc->num_header_bytes = 0;
-					devc->num_block_bytes = 0;
-					read_complete = TRUE;
-
-					// Clear linefeeds
-					sr_dbg("Clear linefeeds.");
-					len = sr_scpi_read_data(scpi, (char *)devc->buffer, 3);
-
-					if (len != 2) {
-						sr_err("Expected linefeeds were missing.");
-						packet.type = SR_DF_FRAME_END;
-						sr_session_send(sdi, &packet);
-						sr_dev_acquisition_stop(sdi);
-					}
-
-					sr_dbg("Verify read complete.");
-					if (!sr_scpi_read_complete(scpi)) {
-						sr_err("Read should have been completed.");
-						packet.type = SR_DF_FRAME_END;
-						sr_session_send(sdi, &packet);
-						sdi->driver->dev_acquisition_stop(sdi);
-						return TRUE;
-					}
-					devc->num_block_read = 0;
-				} else {
-					sr_dbg("%" PRIu64 " of %" PRIu64 " block bytes read.",
-						devc->num_block_bytes, devc->num_samples);
-
-					// Experimental return
-					return TRUE;
-				}
-			} while (!read_complete);
-
-			if (devc->channel_entry->next) {
-				sr_dbg("Proceed to next channel");
-				/* We got the frame for this channel, now get the next channel. */
-				devc->channel_entry = devc->channel_entry->next;
-				if (siglent_sds_channel_start(sdi) != SR_OK) {
-					sr_err("Next channel read failed.");
-					packet.type = SR_DF_FRAME_END;
-					sr_session_send(sdi, &packet);
-					sdi->driver->dev_acquisition_stop(sdi);
-					return TRUE;
-				}
-			} else {
-				/* Done with this frame. */
+		}
+		read_complete = FALSE;
+		do {
+			sr_dbg("Requesting: %li bytes.", devc->num_samples - devc->num_block_bytes);
+			len = sr_scpi_read_data(scpi, (char *)devc->buffer, devc->num_samples-devc->num_block_bytes);
+			sr_dbg("Received: %li bytes.", len);
+			if (len == -1) {
+				sr_err("Read error, aborting capture.");
 				packet.type = SR_DF_FRAME_END;
 				sr_session_send(sdi, &packet);
-				if (++devc->num_frames == devc->limit_frames) {
-					/* Last frame, stop capture. */
-					sdi->driver->dev_acquisition_stop(sdi);
-				} else {
-					/* Get the next frame, starting with the first channel. */
-					devc->channel_entry = devc->enabled_channels;
-					siglent_sds_capture_start(sdi);
+				sr_dev_acquisition_stop(sdi);
+				return TRUE;
+			} else if (len == 0) {
+				/*
+				sr_err("Read zero bytes, aborting capture.");
+				packet.type = SR_DF_FRAME_END;
+				sr_session_send(sdi, &packet);
+				sr_dev_acquisition_stop(sdi);
+				return TRUE;
+				*/
+			} else if (len == 2 && devc->num_block_read == 0) {
+				sr_err("Bad waveform, try again");
+				siglent_sds_set_wait_event(devc, WAIT_BLOCK);
+				return TRUE;
+			}
+			devc->num_block_read++;
+			devc->num_block_bytes += len;
 
-					/* Start of next frame. */
-					packet.type = SR_DF_FRAME_BEGIN;
-					sr_session_send(sdi, &packet);
+			sr_dbg("Received block: %i, %d bytes.", devc->num_block_read, len);
+			if (len == 0) {
+				sr_dbg("Skip..");
+				continue;
+			}
+			if (ch->type == SR_CHANNEL_ANALOG) {
+				float vdiv = devc->vdiv[ch->index];
+				float offset = devc->vert_offset[ch->index];
+				GArray *float_data;
+				static GArray *data;
+				float voltage, vdivlog;
+				int digits;
+
+				data = g_array_sized_new(FALSE, FALSE, sizeof(uint8_t), len);
+				g_array_append_vals(data, devc->buffer, len);
+				float_data = g_array_new(FALSE, FALSE, sizeof(float));
+				for (i = 0; i < len; i++) {
+					voltage = (float)g_array_index(data, int8_t, i) / 25;
+					voltage = ((vdiv * voltage) - offset);
+					g_array_append_val(float_data, voltage);
 				}
+				vdivlog = log10f(vdiv);
+				digits = -(int) vdivlog + (vdivlog < 0.0);
+				sr_analog_init(&analog, &encoding, &meaning, &spec, digits);
+				analog.meaning->channels = g_slist_append(NULL, ch);
+				analog.num_samples = float_data->len;
+				analog.data = (float *)float_data->data;
+				analog.meaning->mq = SR_MQ_VOLTAGE;
+				analog.meaning->unit = SR_UNIT_VOLT;
+				analog.meaning->mqflags = 0;
+				packet.type = SR_DF_ANALOG;
+				packet.payload = &analog;
+				sr_session_send(sdi, &packet);
+				g_slist_free(analog.meaning->channels);
+				g_array_free(data, TRUE);
+			}
+
+			if (devc->num_samples <= devc->num_block_bytes) {
+				sr_dbg("Transfer has been completed.");
+				devc->num_header_bytes = 0;
+				devc->num_block_bytes = 0;
+				read_complete = TRUE;
+
+				// Clear linefeeds
+				sr_dbg("Clear linefeeds.");
+				len = sr_scpi_read_data(scpi, (char *)devc->buffer, 3);
+
+				if (len != 2) {
+					sr_err("Expected linefeeds were missing.");
+					packet.type = SR_DF_FRAME_END;
+					sr_session_send(sdi, &packet);
+					sr_dev_acquisition_stop(sdi);
+				}
+
+				sr_dbg("Verify read complete.");
+				if (!sr_scpi_read_complete(scpi)) {
+					sr_err("Read should have been completed.");
+					packet.type = SR_DF_FRAME_END;
+					sr_session_send(sdi, &packet);
+					sdi->driver->dev_acquisition_stop(sdi);
+					return TRUE;
+				}
+				devc->num_block_read = 0;
+			} else {
+				sr_dbg("%" PRIu64 " of %" PRIu64 " block bytes read.",
+					devc->num_block_bytes, devc->num_samples);
+
+				// Experimental return
+				return TRUE;
+			}
+		} while (!read_complete);
+
+		if (devc->channel_entry->next) {
+			sr_dbg("Proceed to next channel");
+			/* We got the frame for this channel, now get the next channel. */
+			devc->channel_entry = devc->channel_entry->next;
+			if (siglent_sds_channel_start(sdi) != SR_OK) {
+				sr_err("Next channel read failed.");
+				packet.type = SR_DF_FRAME_END;
+				sr_session_send(sdi, &packet);
+				sdi->driver->dev_acquisition_stop(sdi);
+				return TRUE;
+			}
+		} else {
+			/* Done with this frame. */
+			packet.type = SR_DF_FRAME_END;
+			sr_session_send(sdi, &packet);
+			if (++devc->num_frames == devc->limit_frames) {
+				/* Last frame, stop capture. */
+				sdi->driver->dev_acquisition_stop(sdi);
+			} else {
+				/* Get the next frame, starting with the first channel. */
+				devc->channel_entry = devc->enabled_channels;
+				siglent_sds_capture_start(sdi);
+
+				/* Start of next frame. */
+				packet.type = SR_DF_FRAME_BEGIN;
+				sr_session_send(sdi, &packet);
 			}
 		}
 	} else {
