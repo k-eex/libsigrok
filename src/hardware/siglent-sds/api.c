@@ -698,7 +698,7 @@ static int config_set(uint32_t key, GVariant *data,
 	case SR_CONF_AVG_SAMPLES:
 		devc->average_samples = g_variant_get_uint64(data);
 		sr_dbg("Setting averaging rate to %" PRIu64, devc->average_samples);
-		break;	
+		break;
 	default:
 		return SR_ERR_NA;
 	}
@@ -889,7 +889,7 @@ static int dev_acquisition_start(const struct sr_dev_inst *sdi)
 		break;
 	}
 
-	sr_scpi_source_add(sdi->session, scpi, G_IO_IN, 7000,
+	sr_scpi_source_add(sdi->session, scpi, G_IO_IN, 10,
 		siglent_sds_receive, (void *) sdi);
 
 	std_session_send_df_header(sdi);
