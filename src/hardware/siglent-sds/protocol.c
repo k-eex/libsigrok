@@ -551,8 +551,9 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					return TRUE;
 				wait = ((devc->timebase * devc->model->series->num_horizontal_divs) * 100000);
 				wait = 2000000;
-				sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
-				g_usleep(wait);
+				//sr_dbg("Waiting %.f ms for device to prepare the output buffers", wait / 1000);
+				//g_usleep(wait);
+				sr_dbg("There's no time to wait!!");
 				break;
 			}
 
@@ -674,7 +675,7 @@ SR_PRIV int siglent_sds_receive(int fd, int revents, void *cb_data)
 					devc->num_block_bytes, devc->num_samples);
 
 				// Experimental return
-				return TRUE;
+				//return TRUE;
 			}
 		} while (!read_complete);
 
