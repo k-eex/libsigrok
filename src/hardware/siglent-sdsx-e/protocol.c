@@ -20,6 +20,9 @@
 #include <config.h>
 #include "protocol.h"
 
+
+
+
 SR_PRIV int siglent_sdsx_e_receive_data(int fd, int revents, void *cb_data)
 {
 	const struct sr_dev_inst *sdi;

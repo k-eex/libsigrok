@@ -28,6 +28,7 @@
 #define LOG_PREFIX "siglent-sdsx-e"
 
 struct dev_context {
+
 };
 
 SR_PRIV int siglent_sdsx_e_receive_data(int fd, int revents, void *cb_data);
