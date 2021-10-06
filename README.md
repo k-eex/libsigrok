@@ -1,3 +1,13 @@
+ATTENTION!
+------
+
+This fork has two relevant branches:
+
+https://github.com/voneiden/libsigrok/tree/sds-eseries (custom driver for E-series scopes)
+https://github.com/voneiden/libsigrok/tree/siglent-sds-master (fixes for older non E-series scopes)
+
+
+
 -------------------------------------------------------------------------------
 README
 -------------------------------------------------------------------------------
